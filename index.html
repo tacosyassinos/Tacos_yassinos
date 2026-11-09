@@ -63,7 +63,6 @@
 const WA="212661057031";
 const E={TACOS:"🌯",PANINI:"🥪",CHAWARMA:"🥙",PIZZA:"🍕",SALADES:"🥗","PLATS":"🍢",PASTICCIO:"🧀","PÂTES":"🍝",SUPPLÉMENTS:"🍟",BOISSONS:"🥤",DESSERT:"🍰"};
 
-// استرجاع القائمة كاملة من الـ localStorage أو استخدام الأطباق الأصلية بكامل محتوياتها
 const savedMenu = localStorage.getItem("yassinos_custom_menu");
 const M = savedMenu ? JSON.parse(savedMenu) : {
 TACOS:[
@@ -224,7 +223,6 @@ function saveNewPrice() {
     location.reload();
 }
 
-// دمج كود العرض والسلة الأصلي
 const nav = document.getElementById('nav'), main = document.getElementById('main');
 let cur = Object.keys(M)[0], cart = [];
 
