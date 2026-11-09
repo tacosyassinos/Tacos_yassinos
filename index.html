@@ -16,7 +16,7 @@
         nav button{flex:none;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:18px;padding:7px 13px;font-weight:700}
         nav button.on{background:var(--gold);color:#1a1a1a}
         main{padding:12px 12px 90px;max-width:720px;margin:auto}
-        h2{color:var(--gold);margin:18px 0 8px}
+        h2{color:var(--gold);margin:18px 0 8px;border-bottom:2px solid var(--gold);padding-bottom:4px}
         .it{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px;margin-bottom:8px;box-shadow:0 2px 8px #0006;border-left:4px solid var(--gold)}
         .it .e{width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);border-radius:10px;font-size:32px;flex:none;box-shadow:0 0 0 2px var(--gold)}
         .it .n{flex:1;font-weight:600}
@@ -33,17 +33,16 @@
         .tot{border-top:1px solid var(--gold);margin-top:8px;padding-top:8px}
         .hide{display:none}
         header h1{text-shadow:0 2px 6px #0007}
-        h2{border-bottom:2px solid var(--gold);padding-bottom:4px}
     </style>
 </head>
 <body>
 
 <header>
-    <h1 id="secretTitle" onclick="tap()">🌮 TACOS YASSINOS</h1>
+    <h1 onclick="handleTitleClick()">🌮 TACOS YASSINOS</h1>
     <small>Livraison jusqu'à domicile · التوصيل حتى الدار</small>
     
     <!-- لوحة التحكم السرية لتعديل الأثمنة (مخفية افتراضياً) -->
-    <div id="priceEditorPanel" class="hide" style="background: rgba(0,0,0,0.85); padding: 12px; margin-top: 12px; border-radius: 10px; border: 1px solid var(--gold); text-align: right;">
+    <div id="priceEditorPanel" class="hide" style="background: rgba(0,0,0,0.9); padding: 12px; margin-top: 12px; border-radius: 10px; border: 1px solid var(--gold); text-align: right;">
         <p style="color: var(--gold); margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">🛠️ لوحة تعديل الأثمنة السريعة</p>
         <select id="itemSelect" style="margin-bottom: 8px;"></select>
         <input type="number" id="itemNewPrice" placeholder="أدخل السعر الجديد" style="margin-bottom: 8px;">
@@ -60,7 +59,7 @@
 <nav id="nav"></nav>
 <main id="main"></main>
 
-<div id="bar"><button class="b" id="cartBtn">🛒 Voir le panier</button></div>
+<div id="bar"><button class="b" id="cartBtn" onclick="openCart()">🛒 Voir le panier</button></div>
 
 <script>
 const WA = "212661057031";
@@ -70,7 +69,7 @@ const E = {
     CHAWARMA: "🥙", 
     PIZZA: "🍕", 
     SALADES: "🥗", 
-    "PLATS": "🍢", 
+    PLATS: "🍢", 
     PASTICCIO: "🧀", 
     "PÂTES": "🍝", 
     SUPPLÉMENTS: "🍟", 
@@ -78,118 +77,86 @@ const E = {
     DESSERT: "🍰"
 };
 
-// استرجاع القائمة المعدلة من الـ localStorage أو استخدام الأطباق الأصلية بكامل محتوياتها
-const savedMenu = localStorage.getItem("yassinos_custom_menu");
-const M = savedMenu ? JSON.parse(savedMenu) : {
+// البيانات الأساسية والأصلية للأطباق
+const defaultMenu = {
     TACOS: [
-        ["Tacos Poulet", 30],
-        ["Tacos Viande", 30],
-        ["Tacos Nuggets", 30],
-        ["Tacos Chawarma", 30],
-        ["Tacos Mixte", 30],
-        ["Tacos Crispy", 30],
-        ["Tacos Jambon", 30],
-        ["Tacos Mexicain", 32],
-        ["Cordon Bleu", 32],
-        ["Big Tacos", 37],
-        ["Tacos Torittos", 39],
-        ["Tacos Gratiné", 40],
-        ["Tacos Poulet XL", 55],
-        ["Viande Hachée XL Tacos", 55],
-        ["Tacos Crispy XL", 58],
-        ["Mixte XL", 58],
-        ["Tacos Gega", 150]
+        ["Tacos Poulet", 30], ["Tacos Viande", 30], ["Tacos Nuggets", 30], 
+        ["Tacos Chawarma", 30], ["Tacos Mixte", 30], ["Tacos Crispy", 30], 
+        ["Tacos Jambon", 30], ["Tacos Mexicain", 32], ["Cordon Bleu", 32], 
+        ["Big Tacos", 37], ["Tacos Torittos", 39], ["Tacos Gratiné", 40], 
+        ["Tacos Poulet XL", 55], ["Viande Hachée XL Tacos", 55], 
+        ["Tacos Crispy XL", 58], ["Mixte XL", 58], ["Tacos Gega", 150]
     ],
     PANINI: [
-        ["Panini Poulet", 25],
-        ["Panini Viande Hachée", 25],
-        ["Panini Nuggets", 25],
-        ["Panini Mixte", 26]
+        ["Panini Poulet", 25], ["Panini Viande Hachée", 25], 
+        ["Panini Nuggets", 25], ["Panini Mixte", 26]
     ],
     CHAWARMA: [
-        ["Chawarma Normale", 25],
-        ["Fromage + Frite", 30],
-        ["Double Fromage", 32]
+        ["Chawarma Normale", 25], ["Fromage + Frite", 30], ["Double Fromage", 32]
     ],
     PIZZA: [
-        ["Pizza Margarita", [20, 30]],
-        ["Pizza Végétarienne", [20, 30]],
-        ["Pizza Pepperoni", [25, 35]],
-        ["Pizza Viande Hachée", [25, 35]],
-        ["Pizza Poulet", [25, 35]],
-        ["Pizza Thon", [25, 35]],
-        ["Pizza 4 Saisons", [30, 37]],
-        ["Pizza Chawarma", [28, 38]],
+        ["Pizza Margarita", [20, 30]], ["Pizza Végétarienne", [20, 30]], 
+        ["Pizza Pepperoni", [25, 35]], ["Pizza Viande Hachée", [25, 35]], 
+        ["Pizza Poulet", [25, 35]], ["Pizza Thon", [25, 35]], 
+        ["Pizza 4 Saisons", [30, 37]], ["Pizza Chawarma", [28, 38]], 
         ["Pizza Fruits de Mer", [30, 45]]
     ],
     SALADES: [
-        ["Salade Chef", 20],
-        ["Salade Riche", 25],
-        ["Salade Crispy", 25],
-        ["Salade Variée", 30],
-        ["Salade Fruits de Mer", 40]
+        ["Salade Chef", 20], ["Salade Riche", 25], ["Salade Crispy", 25], 
+        ["Salade Variée", 30], ["Salade Fruits de Mer", 40]
     ],
     PLATS: [
-        ["Brochette Poulet", 35],
-        ["Brochette Viande", 35],
-        ["Plat Crispy", 35],
-        ["Plat Chawarma", 35],
-        ["Plat Émincé", 40]
+        ["Brochette Poulet", 35], ["Brochette Viande", 35], 
+        ["Plat Crispy", 35], ["Plat Chawarma", 35], ["Plat Émincé", 40]
     ],
     PASTICCIO: [
-        ["Pasticcio Poulet", 35],
-        ["Pasticcio Jambon", 30],
-        ["Pasticcio Nuggets", 35],
-        ["Pasticcio Viande Hachée", 35],
-        ["Pasticcio Mixte", 35],
-        ["Pasticcio Cordon Bleu", 35],
-        ["Pasticcio Chawarma", 35],
-        ["Pasticcio Fruits de Mer", 45],
+        ["Pasticcio Poulet", 35], ["Pasticcio Jambon", 30], 
+        ["Pasticcio Nuggets", 35], ["Pasticcio Viande Hachée", 35], 
+        ["Pasticcio Mixte", 35], ["Pasticcio Cordon Bleu", 35], 
+        ["Pasticcio Chawarma", 35], ["Pasticcio Fruits de Mer", 45], 
         ["Kassriya Pasticcio", 150]
     ],
     "PÂTES": [
-        ["Pâtes Charcuterie", 35],
-        ["Pâtes Poulet", 35],
-        ["Pâtes Bolognaise", 35],
-        ["Pâtes Fruits de Mer", 45]
+        ["Pâtes Charcuterie", 35], ["Pâtes Poulet", 35], 
+        ["Pâtes Bolognaise", 35], ["Pâtes Fruits de Mer", 45]
     ],
     SUPPLÉMENTS: [
-        ["Portion de frites", 7],
-        ["Supplément fromage", 3],
-        ["6 pièces Nuggets", 25],
-        ["6 Mozza Sticks", 35]
+        ["Portion de frites", 7], ["Supplément fromage", 3], 
+        ["6 pièces Nuggets", 25], ["6 Mozza Sticks", 35]
     ],
     BOISSONS: [
-        ["Jus citron / orange", 10],
-        ["Jus avocat", 30],
-        ["Jus Panaché", 18],
-        ["Soda 1 L", 15]
+        ["Jus citron / orange", 10], ["Jus avocat", 30], 
+        ["Jus Panaché", 18], ["Soda 1 L", 15]
     ],
     DESSERT: [
         ["Tiramisu", 20]
     ]
 };
 
-// متغيرات الرمز السري والنقرات
-const SECRET_PIN = "1234"; 
+// تحميل القائمة من التخزين المحلي أو استخدام الافتراضية
+let savedMenu = localStorage.getItem("yassinos_custom_menu");
+let M = savedMenu ? JSON.parse(savedMenu) : defaultMenu;
+
+let currentCategory = Object.keys(M)[0];
+let cart = [];
+
+// نظام النقر 5 مرات للرمز السري
+const SECRET_PIN = "1234";
 let clickCount = 0;
 let clickTimer = null;
 
-function tap() {
+function handleTitleClick() {
     clickCount++;
     clearTimeout(clickTimer);
-    
-    clickTimer = setTimeout(() => {
-        clickCount = 0;
-    }, 1000);
+    clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
 
     if (clickCount >= 5) {
         clickCount = 0;
-        let enteredPin = prompt("أدخل الرمز السري للوحة التحكم:");
-        if (enteredPin === SECRET_PIN) {
+        let pin = prompt("أدخل الرمز السري للوحة التحكم:");
+        if (pin === SECRET_PIN) {
             alert("تم التحقق بنجاح!");
             togglePriceEditor();
-        } else if (enteredPin !== null) {
+        } else if (pin !== null) {
             alert("الرمز السري غير صحيح!");
         }
     }
@@ -236,90 +203,109 @@ function saveNewPrice() {
     }
 
     localStorage.setItem("yassinos_custom_menu", JSON.stringify(M));
-    alert("تم تحديث وحفظ السعر بنجاح! سيتم تحديث الصفحة.");
-    location.reload();
+    alert("تم تحديث وحفظ السعر بنجاح!");
+    togglePriceEditor();
+    renderMain();
 }
 
-const nav = document.getElementById('nav'), main = document.getElementById('main');
-let cur = Object.keys(M)[0], cart = [];
-
-function renderNav(){
+// عرض أزرار التنقل الأفقية
+function renderNav() {
+    const nav = document.getElementById('nav');
     nav.innerHTML = '';
     Object.keys(M).forEach(k => {
         let btn = document.createElement('button');
-        btn.textContent = (E[k]||'') + ' ' + k;
-        if(k === cur) btn.className = 'on';
-        btn.onclick = () => { cur = k; renderNav(); renderMain(); };
+        btn.textContent = (E[k] || '🍽️') + ' ' + k;
+        if (k === currentCategory) btn.className = 'on';
+        btn.onclick = () => {
+            currentCategory = k;
+            renderNav();
+            renderMain();
+        };
         nav.appendChild(btn);
     });
 }
 
-function renderMain(){
-    main.innerHTML = `<h2>${(E[cur]||'')} ${cur}</h2>`;
-    M[cur].forEach((item, i) => {
+// عرض الأطباق داخل القسم الحالي
+function renderMain() {
+    const main = document.getElementById('main');
+    main.innerHTML = `<h2>${(E[currentCategory] || '🍽️')} ${currentCategory}</h2>`;
+    
+    if (!M[currentCategory]) return;
+
+    M[currentCategory].forEach((item, i) => {
         let div = document.createElement('div');
         div.className = 'it';
         let name = item[0], price = item[1];
         let pHTML = '';
-        if(Array.isArray(price)){
-            pHTML = `<div class="sz"><button class="b" onclick="add('${cur}',${i},0)">Petit: ${price[0]}dh</button><button class="b" onclick="add('${cur}',${i},1)">Grand: ${price[1]}dh</button></div>`;
+        
+        if (Array.isArray(price)) {
+            pHTML = `<div class="sz"><button class="b" onclick="addToCart('${currentCategory}', ${i}, 0)">Petit: ${price[0]}dh</button><button class="b" onclick="addToCart('${currentCategory}', ${i}, 1)">Grand: ${price[1]}dh</button></div>`;
         } else {
-            pHTML = `<div class="p">${price} DH</div><button class="b" onclick="add('${cur}',${i})">+</button>`;
+            pHTML = `<div class="p">${price} DH</div><button class="b" onclick="addToCart('${currentCategory}', ${i})">+</button>`;
         }
-        div.innerHTML = `<div class="e">${E[cur]||'🍽️'}</div><div class="n">${name}</div>${pHTML}`;
+        
+        div.innerHTML = `<div class="e">${E[currentCategory] || '🍽️'}</div><div class="n">${name}</div>${pHTML}`;
         main.appendChild(div);
     });
 }
 
-function add(cat, idx, sizeIdx){
+function addToCart(cat, idx, sizeIdx) {
     let item = M[cat][idx];
     let name = item[0], price = item[1];
     let sizeName = '', finalPrice = price;
-    if(Array.isArray(price)){
+    
+    if (Array.isArray(price)) {
         finalPrice = price[sizeIdx];
         sizeName = (sizeIdx === 0 ? ' (Petit)' : ' (Grand)');
     }
+    
     let found = cart.find(c => c.cat === cat && c.idx === idx && c.sizeIdx === sizeIdx);
-    if(found){ found.qty++; }
-    else{ cart.push({cat, idx, sizeIdx, name: name + sizeName, price: finalPrice, qty: 1}); }
+    if (found) {
+        found.qty++;
+    } else {
+        cart.push({ cat, idx, sizeIdx, name: name + sizeName, price: finalPrice, qty: 1 });
+    }
     updateBar();
 }
 
-document.getElementById('cartBtn').onclick = () => {
+function openCart() {
+    let main = document.getElementById('main');
     let html = `<h2>🛒 Mon Panier</h2>`;
-    if(cart.length === 0){ html += `<p>Le panier est vide.</p>`; }
-    else{
+    if (cart.length === 0) {
+        html += `<p>Le panier est vide.</p>`;
+    } else {
         cart.forEach((c, i) => {
-            html += `<div class="row"><span>${c.name} - ${c.price} DH</span><div class="q"><button onclick="chg(${i},-1)">-</button><span>${c.qty}</span><button onclick="chg(${i},1)">+</button></div></div>`;
+            html += `<div class="row"><span>${c.name} - ${c.price} DH</span><div class="q"><button onclick="changeQty(${i}, -1)">-</button><span>${c.qty}</span><button onclick="changeQty(${i}, 1)">+</button></div></div>`;
         });
         let tot = cart.reduce((s, c) => s + c.price * c.qty, 0);
         html += `<div class="row tot"><b>Total:</b> <b>${tot} DH</b></div><button class="b" style="width:100%;margin-top:15px;" onclick="sendWA()">Envoyer sur WhatsApp 💬</button>`;
     }
     main.innerHTML = html;
-};
+}
 
-function chg(i, d){
+function changeQty(i, d) {
     cart[i].qty += d;
-    if(cart[i].qty <= 0) cart.splice(i, 1);
-    document.getElementById('cartBtn').click();
+    if (cart[i].qty <= 0) cart.splice(i, 1);
+    openCart();
     updateBar();
 }
 
-function updateBar(){
+function updateBar() {
     let totalQty = cart.reduce((s, c) => s + c.qty, 0);
     let totalPrice = cart.reduce((s, c) => s + c.price * c.qty, 0);
     let btn = document.getElementById('cartBtn');
     btn.textContent = totalQty > 0 ? `🛒 Panier (${totalQty} articles) - ${totalPrice} DH` : `🛒 Voir le panier`;
 }
 
-function sendWA(){
+function sendWA() {
     let txt = "Bonjour, je souhaite commander:%0A";
-    cart.forEach(c => { txt += `- ${c.qty}x ${c.name} (${c.price*c.qty} DH)%0A`; });
+    cart.forEach(c => { txt += `- ${c.qty}x ${c.name} (${c.price * c.qty} DH)%0A`; });
     let tot = cart.reduce((s, c) => s + c.price * c.qty, 0);
     txt += `%0ATotal: ${tot} DH`;
     window.open(`https://wa.me/${WA}?text=${txt}`, '_blank');
 }
 
+// تشغيل التطبيق عند التحميل
 renderNav();
 renderMain();
 </script>
