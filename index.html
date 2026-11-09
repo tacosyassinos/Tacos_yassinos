@@ -26,13 +26,14 @@
         .sz{display:flex;gap:6px}
         #bar{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--red);border-top:2px solid var(--gold);z-index:6}
         #bar button{width:100%;font-size:16px;padding:13px}
-        input,select{width:100%;padding:11px;border-radius:9px;border:0;margin:4px 0;font-size:16px;background:#fff;color:#222}
+        input,select{width:100%;padding:10px;border-radius:9px;border:0;margin:4px 0;font-size:15px;background:#fff;color:#222}
         .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0}
         .q button{width:30px;height:30px;border-radius:8px;border:0;background:var(--gold);font-weight:800;cursor:pointer;}
         .q span{display:inline-block;min-width:26px;text-align:center}
         .tot{border-top:1px solid var(--gold);margin-top:8px;padding-top:8px}
         .hide{display:none}
         header h1{text-shadow:0 2px 6px #0007}
+        .admin-box{background:rgba(0,0,0,0.85); padding:12px; margin-top:12px; border-radius:10px; border:1px solid var(--gold); text-align:right;}
     </style>
 </head>
 <body>
@@ -41,12 +42,20 @@
     <h1 onclick="handleTitleClick()">🌮 TACOS YASSINOS</h1>
     <small>Livraison jusqu'à domicile · التوصيل حتى الدار</small>
     
-    <!-- لوحة التحكم السرية لتعديل الأثمنة (مخفية افتراضياً) -->
-    <div id="priceEditorPanel" class="hide" style="background: rgba(0,0,0,0.9); padding: 12px; margin-top: 12px; border-radius: 10px; border: 1px solid var(--gold); text-align: right;">
-        <p style="color: var(--gold); margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">🛠️ لوحة تعديل الأثمنة السريعة</p>
-        <select id="itemSelect" style="margin-bottom: 8px;"></select>
-        <input type="number" id="itemNewPrice" placeholder="أدخل السعر الجديد" style="margin-bottom: 8px;">
-        <button class="b" onclick="saveNewPrice()" style="width: 100%;">حفظ السعر الجديد</button>
+    <!-- لوحة التحكم السرية (تعديل الأثمنة + إضافة أطباق جديدة) -->
+    <div id="priceEditorPanel" class="hide admin-box">
+        <p style="color: var(--gold); margin: 0 0 6px 0; font-size: 14px; font-weight: bold;">🛠️ تعديل الأثمنة الحالية</p>
+        <select id="itemSelect" style="margin-bottom: 6px;"></select>
+        <input type="number" id="itemNewPrice" placeholder="السعر الجديد" style="margin-bottom: 10px;">
+        <button class="b" onclick="saveNewPrice()" style="width: 100%; margin-bottom: 15px;">حفظ السعر الجديد</button>
+
+        <hr style="border-color: rgba(255,255,255,0.2);">
+
+        <p style="color: var(--gold); margin: 10px 0 6px 0; font-size: 14px; font-weight: bold;">➕ إضافة طبق جديد للقائمة</p>
+        <select id="newCategorySelect" style="margin-bottom: 6px;"></select>
+        <input type="text" id="newDishName" placeholder="اسم الطبق الجديد (مثال: Tacos Spécial)" style="margin-bottom: 6px;">
+        <input type="number" id="newDishPrice" placeholder="ثمن الطبق (مثال: 35)" style="margin-bottom: 8px;">
+        <button class="b" onclick="addNewDish()" style="width: 100%;">إضافة الطبق للقائمة</button>
     </div>
 
     <div class="contact">
@@ -77,7 +86,6 @@ const E = {
     DESSERT: "🍰"
 };
 
-// البيانات الأساسية والأصلية للأطباق
 const defaultMenu = {
     TACOS: [
         ["Tacos Poulet", 30], ["Tacos Viande", 30], ["Tacos Nuggets", 30], 
@@ -133,14 +141,12 @@ const defaultMenu = {
     ]
 };
 
-// تحميل القائمة من التخزين المحلي أو استخدام الافتراضية
 let savedMenu = localStorage.getItem("yassinos_custom_menu");
 let M = savedMenu ? JSON.parse(savedMenu) : defaultMenu;
 
 let currentCategory = Object.keys(M)[0];
 let cart = [];
 
-// نظام النقر 5 مرات للرمز السري
 const SECRET_PIN = "1234";
 let clickCount = 0;
 let clickTimer = null;
@@ -167,6 +173,7 @@ function togglePriceEditor() {
     panel.classList.toggle("hide");
     if (!panel.classList.contains("hide")) {
         populateItemSelect();
+        populateCategorySelect();
     }
 }
 
@@ -181,6 +188,17 @@ function populateItemSelect() {
             opt.textContent = `[${cat}] ${item[0]} (${priceText} دج)`;
             select.appendChild(opt);
         });
+    }
+}
+
+function populateCategorySelect() {
+    const select = document.getElementById("newCategorySelect");
+    select.innerHTML = "";
+    for (let cat in M) {
+        let opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = `${E[cat] || '🍽️'} ${cat}`;
+        select.appendChild(opt);
     }
 }
 
@@ -203,12 +221,41 @@ function saveNewPrice() {
     }
 
     localStorage.setItem("yassinos_custom_menu", JSON.stringify(M));
-    alert("تم تحديث وحفظ السعر بنجاح!");
+    alert("تم تحديث السعر بنجاح!");
     togglePriceEditor();
     renderMain();
 }
 
-// عرض أزرار التنقل الأفقية
+// دالة إضافة طبق جديد للقائمة
+function addNewDish() {
+    const cat = document.getElementById("newCategorySelect").value;
+    const name = document.getElementById("newDishName").value.trim();
+    const price = parseFloat(document.getElementById("newDishPrice").value);
+
+    if (!name || isNaN(price)) {
+        alert("الرجاء إدخال اسم الطبق وثمنه بشكل صحيح.");
+        return;
+    }
+
+    // إضافة الطبق الجديد للمصفوفة الخاصة بالقسم
+    M[cat].push([name, price]);
+
+    // الحفظ في التخزين المحلي
+    localStorage.setItem("yassinos_custom_menu", JSON.stringify(M));
+    
+    alert(`تمت إضافة "${name}" إلى قسم ${cat} بنجاح!`);
+    
+    // تفريغ الحقول وإغلاق اللوحة وتحديث العرض
+    document.getElementById("newDishName").value = "";
+    document.getElementById("newDishPrice").value = "";
+    togglePriceEditor();
+    
+    // الانتقال تلقائياً للقسم الذي أضفت إليه الطبق لترسيه فوراً
+    currentCategory = cat;
+    renderNav();
+    renderMain();
+}
+
 function renderNav() {
     const nav = document.getElementById('nav');
     nav.innerHTML = '';
@@ -225,7 +272,6 @@ function renderNav() {
     });
 }
 
-// عرض الأطباق داخل القسم الحالي
 function renderMain() {
     const main = document.getElementById('main');
     main.innerHTML = `<h2>${(E[currentCategory] || '🍽️')} ${currentCategory}</h2>`;
@@ -305,7 +351,6 @@ function sendWA() {
     window.open(`https://wa.me/${WA}?text=${txt}`, '_blank');
 }
 
-// تشغيل التطبيق عند التحميل
 renderNav();
 renderMain();
 </script>
