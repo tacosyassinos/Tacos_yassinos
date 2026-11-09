@@ -17,20 +17,23 @@
         nav button.on{background:var(--gold);color:#1a1a1a}
         main{padding:12px 12px 90px;max-width:720px;margin:auto}
         h2{color:var(--gold);margin:18px 0 8px}
-        .it{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px;margin-bottom:8px}
-        .ph{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:none}.it .e{width:64px;text-align:center;font-size:28px}.it .n{flex:1;font-weight:600}.it .p{color:var(--gold);font-weight:700;font-size:14px}
-        .it.off{opacity:.45}
-        .b{background:var(--gold);color:#1a1a1a;border:0;border-radius:10px;padding:8px 12px;font-weight:800}
+        .it{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px;margin-bottom:8px;box-shadow:0 2px 8px #0006;border-left:4px solid var(--gold)}
+        .it .e{width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);border-radius:10px;font-size:32px;flex:none;box-shadow:0 0 0 2px var(--gold)}
+        .it .n{flex:1;font-weight:600}
+        .it .p{color:var(--gold);font-weight:700;font-size:14px}
+        .b{background:var(--gold);color:#1a1a1a;border:0;border-radius:10px;padding:8px 12px;font-weight:800;cursor:pointer;}
+        .b:disabled{background:#999}
         .sz{display:flex;gap:6px}
         #bar{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--red);border-top:2px solid var(--gold);z-index:6}
         #bar button{width:100%;font-size:16px;padding:13px}
-        input,select{width:100%;padding:11px;border-radius:9px;border:0;margin:4px 0;font-size:16px}
+        input,select{width:100%;padding:11px;border-radius:9px;border:0;margin:4px 0;font-size:16px;background:#fff;color:#222}
         .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0}
-        .q button{width:30px;height:30px;border-radius:8px;border:0;background:var(--gold);font-weight:800}
+        .q button{width:30px;height:30px;border-radius:8px;border:0;background:var(--gold);font-weight:800;cursor:pointer;}
         .q span{display:inline-block;min-width:26px;text-align:center}
         .tot{border-top:1px solid var(--gold);margin-top:8px;padding-top:8px}
-        .hide{display:none}.note{font-size:13px;opacity:.8}
-        .card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px}.it{box-shadow:0 2px 8px #0006;border-left:4px solid var(--gold)}.ph{box-shadow:0 0 0 2px var(--gold)}h2{border-bottom:2px solid var(--gold);padding-bottom:4px}input,select{background:#fff;color:#222}.b{color:#06280f}.b:disabled{background:#999}header h1{text-shadow:0 2px 6px #0007}
+        .hide{display:none}
+        header h1{text-shadow:0 2px 6px #0007}
+        h2{border-bottom:2px solid var(--gold);padding-bottom:4px}
     </style>
 </head>
 <body>
@@ -40,7 +43,7 @@
     <small>Livraison jusqu'à domicile · التوصيل حتى الدار</small>
     
     <!-- لوحة التحكم السرية لتعديل الأثمنة (مخفية افتراضياً) -->
-    <div id="priceEditorPanel" class="hide" style="background: rgba(0,0,0,0.85); padding: 12px; margin-top: 12px; border-radius: 10px; border: 1px solid var(--gold);">
+    <div id="priceEditorPanel" class="hide" style="background: rgba(0,0,0,0.85); padding: 12px; margin-top: 12px; border-radius: 10px; border: 1px solid var(--gold); text-align: right;">
         <p style="color: var(--gold); margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">🛠️ لوحة تعديل الأثمنة السريعة</p>
         <select id="itemSelect" style="margin-bottom: 8px;"></select>
         <input type="number" id="itemNewPrice" placeholder="أدخل السعر الجديد" style="margin-bottom: 8px;">
@@ -60,98 +63,112 @@
 <div id="bar"><button class="b" id="cartBtn">🛒 Voir le panier</button></div>
 
 <script>
-const WA="212661057031";
-const E={TACOS:"🌯",PANINI:"🥪",CHAWARMA:"🥙",PIZZA:"🍕",SALADES:"🥗","PLATS":"🍢",PASTICCIO:"🧀","PÂTES":"🍝",SUPPLÉMENTS:"🍟",BOISSONS:"🥤",DESSERT:"🍰"};
+const WA = "212661057031";
+const E = {
+    TACOS: "🌯", 
+    PANINI: "🥪", 
+    CHAWARMA: "🥙", 
+    PIZZA: "🍕", 
+    SALADES: "🥗", 
+    "PLATS": "🍢", 
+    PASTICCIO: "🧀", 
+    "PÂTES": "🍝", 
+    SUPPLÉMENTS: "🍟", 
+    BOISSONS: "🥤", 
+    DESSERT: "🍰"
+};
 
+// استرجاع القائمة المعدلة من الـ localStorage أو استخدام الأطباق الأصلية بكامل محتوياتها
 const savedMenu = localStorage.getItem("yassinos_custom_menu");
 const M = savedMenu ? JSON.parse(savedMenu) : {
-TACOS:[
-    ["Tacos Poulet",30],
-    ["Tacos Viande",30],
-    ["Tacos Nuggets",30],
-    ["Tacos Chawarma",30],
-    ["Tacos Mixte",30],
-    ["Tacos Crispy",30],
-    ["Tacos Jambon",30],
-    ["Tacos Mexicain",32],
-    ["Cordon Bleu",32],
-    ["Big Tacos",37],
-    ["Tacos Torittos",39],
-    ["Tacos Gratiné",40],
-    ["Tacos Poulet XL",55],
-    ["Viande Hachée XL Tacos",55],
-    ["Tacos Crispy XL",58],
-    ["Mixte XL",58],
-    ["Tacos Gega",150]
-],
-PANINI:[
-    ["Panini Poulet",25],
-    ["Panini Viande Hachée",25],
-    ["Panini Nuggets",25],
-    ["Panini Mixte",26]
-],
-CHAWARMA:[
-    ["Chawarma Normale",25],
-    ["Fromage + Frite",30],
-    ["Double Fromage",32]
-],
-PIZZA:[
-    ["Pizza Margarita",[20,30]],
-    ["Pizza Végétarienne",[20,30]],
-    ["Pizza Pepperoni",[25,35]],
-    ["Pizza Viande Hachée",[25,35]],
-    ["Pizza Poulet",[25,35]],
-    ["Pizza Thon",[25,35]],
-    ["Pizza 4 Saisons",[30,37]],
-    ["Pizza Chawarma",[28,38]],
-    ["Pizza Fruits de Mer",[30,45]]
-],
-SALADES:[
-    ["Salade Chef",20],
-    ["Salade Riche",25],
-    ["Salade Crispy",25],
-    ["Salade Variée",30],
-    ["Salade Fruits de Mer",40]
-],
-PLATS:[
-    ["Brochette Poulet",35],
-    ["Brochette Viande",35],
-    ["Plat Crispy",35],
-    ["Plat Chawarma",35],
-    ["Plat Émincé",40]
-],
-PASTICCIO:[
-    ["Pasticcio Poulet",35],
-    ["Pasticcio Jambon",30],
-    ["Pasticcio Nuggets",35],
-    ["Pasticcio Viande Hachée",35],
-    ["Pasticcio Mixte",35],
-    ["Pasticcio Cordon Bleu",35],
-    ["Pasticcio Chawarma",35],
-    ["Pasticcio Fruits de Mer",45],
-    ["Kassriya Pasticcio",150]
-],
-"PÂTES":[
-    ["Pâtes Charcuterie",35],
-    ["Pâtes Poulet",35],
-    ["Pâtes Bolognaise",35],
-    ["Pâtes Fruits de Mer",45]
-],
-SUPPLÉMENTS:[
-    ["Portion de frites",7],
-    ["Supplément fromage",3],
-    ["6 pièces Nuggets",25],
-    ["6 Mozza Sticks",35]
-],
-BOISSONS:[
-    ["Jus citron / orange",10],
-    ["Jus avocat",30],
-    ["Jus Panaché",18],
-    ["Soda 1 L",15]
-],
-DESSERT:[
-    ["Tiramisu",20]
-]};
+    TACOS: [
+        ["Tacos Poulet", 30],
+        ["Tacos Viande", 30],
+        ["Tacos Nuggets", 30],
+        ["Tacos Chawarma", 30],
+        ["Tacos Mixte", 30],
+        ["Tacos Crispy", 30],
+        ["Tacos Jambon", 30],
+        ["Tacos Mexicain", 32],
+        ["Cordon Bleu", 32],
+        ["Big Tacos", 37],
+        ["Tacos Torittos", 39],
+        ["Tacos Gratiné", 40],
+        ["Tacos Poulet XL", 55],
+        ["Viande Hachée XL Tacos", 55],
+        ["Tacos Crispy XL", 58],
+        ["Mixte XL", 58],
+        ["Tacos Gega", 150]
+    ],
+    PANINI: [
+        ["Panini Poulet", 25],
+        ["Panini Viande Hachée", 25],
+        ["Panini Nuggets", 25],
+        ["Panini Mixte", 26]
+    ],
+    CHAWARMA: [
+        ["Chawarma Normale", 25],
+        ["Fromage + Frite", 30],
+        ["Double Fromage", 32]
+    ],
+    PIZZA: [
+        ["Pizza Margarita", [20, 30]],
+        ["Pizza Végétarienne", [20, 30]],
+        ["Pizza Pepperoni", [25, 35]],
+        ["Pizza Viande Hachée", [25, 35]],
+        ["Pizza Poulet", [25, 35]],
+        ["Pizza Thon", [25, 35]],
+        ["Pizza 4 Saisons", [30, 37]],
+        ["Pizza Chawarma", [28, 38]],
+        ["Pizza Fruits de Mer", [30, 45]]
+    ],
+    SALADES: [
+        ["Salade Chef", 20],
+        ["Salade Riche", 25],
+        ["Salade Crispy", 25],
+        ["Salade Variée", 30],
+        ["Salade Fruits de Mer", 40]
+    ],
+    PLATS: [
+        ["Brochette Poulet", 35],
+        ["Brochette Viande", 35],
+        ["Plat Crispy", 35],
+        ["Plat Chawarma", 35],
+        ["Plat Émincé", 40]
+    ],
+    PASTICCIO: [
+        ["Pasticcio Poulet", 35],
+        ["Pasticcio Jambon", 30],
+        ["Pasticcio Nuggets", 35],
+        ["Pasticcio Viande Hachée", 35],
+        ["Pasticcio Mixte", 35],
+        ["Pasticcio Cordon Bleu", 35],
+        ["Pasticcio Chawarma", 35],
+        ["Pasticcio Fruits de Mer", 45],
+        ["Kassriya Pasticcio", 150]
+    ],
+    "PÂTES": [
+        ["Pâtes Charcuterie", 35],
+        ["Pâtes Poulet", 35],
+        ["Pâtes Bolognaise", 35],
+        ["Pâtes Fruits de Mer", 45]
+    ],
+    SUPPLÉMENTS: [
+        ["Portion de frites", 7],
+        ["Supplément fromage", 3],
+        ["6 pièces Nuggets", 25],
+        ["6 Mozza Sticks", 35]
+    ],
+    BOISSONS: [
+        ["Jus citron / orange", 10],
+        ["Jus avocat", 30],
+        ["Jus Panaché", 18],
+        ["Soda 1 L", 15]
+    ],
+    DESSERT: [
+        ["Tiramisu", 20]
+    ]
+};
 
 // متغيرات الرمز السري والنقرات
 const SECRET_PIN = "1234"; 
